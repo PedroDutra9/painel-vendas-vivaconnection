@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { COLORS, FONT_DISPLAY, FONT_BODY, FONT_MONO } from "./theme.js";
 import { DRE_GROUPS, SUBTOTALS } from "./dreMapping.js";
-import { parseDreFile } from "./dreParser.js";
+import { parseDreFileByName as parseDreFile } from "./dreParserByName.js";
 
 const STORAGE_PREFIX = "dre-snapshot:";
 const LOG_KEY = "dre-import-log";
@@ -101,8 +101,8 @@ function ReconcilePreview({ result, onConfirm, onCancel, monthKey }) {
           Referente a {monthLabel(monthKey)}. Veja se os valores reconhecidos batem antes de confirmar.
         </p>
 
-        <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
-          <div style={{ flex: 1, background: COLORS.greenSoft, borderRadius: 8, padding: "10px 14px" }}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 140px", background: COLORS.greenSoft, borderRadius: 8, padding: "10px 14px" }}>
             <div style={{ fontSize: 11.5, color: COLORS.green, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
               <CheckCircle2 size={13} /> Reconhecidos
             </div>
@@ -110,8 +110,18 @@ function ReconcilePreview({ result, onConfirm, onCancel, monthKey }) {
               {result.matched.length} linhas
             </div>
           </div>
+          {result.excluded && result.excluded.length > 0 && (
+            <div style={{ flex: "1 1 140px", background: COLORS.purpleSoft || "#EEE", borderRadius: 8, padding: "10px 14px" }}>
+              <div style={{ fontSize: 11.5, color: COLORS.purple || COLORS.inkMuted, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+                <Info size={13} /> Fora do DRE (proposital)
+              </div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 18, fontWeight: 600, color: COLORS.ink, marginTop: 3 }}>
+                {result.excluded.length} linhas
+              </div>
+            </div>
+          )}
           {result.unmatched.length > 0 && (
-            <div style={{ flex: 1, background: COLORS.amberSoft, borderRadius: 8, padding: "10px 14px" }}>
+            <div style={{ flex: "1 1 140px", background: COLORS.amberSoft, borderRadius: 8, padding: "10px 14px" }}>
               <div style={{ fontSize: 11.5, color: COLORS.amber, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
                 <AlertTriangle size={13} /> Não reconhecidos
               </div>
@@ -157,7 +167,7 @@ function ReconcilePreview({ result, onConfirm, onCancel, monthKey }) {
                     display: "flex", justifyContent: "space-between", padding: "6px 12px", fontSize: 12,
                     borderBottom: i < result.unmatched.length - 1 ? `1px solid ${COLORS.bg}` : "none",
                   }}>
-                    <span style={{ fontFamily: FONT_MONO, color: COLORS.inkMuted }}>{u.code}</span>
+                    <span style={{ color: COLORS.inkMuted }}>{u.descricao}</span>
                     <span style={{ fontFamily: FONT_MONO }}>{fmtBRLFull(u.value)}</span>
                   </div>
                 ))}
@@ -256,8 +266,8 @@ export default function DreGerencial() {
     setUploadMsg(null);
     try {
       const result = await parseDreFile(file);
-      if (result.matched.length === 0 && result.unmatched.length === 0) {
-        setUploadError("Não encontrei nenhum código de conta (tipo 01.01, 04.02.06.02) nesse arquivo.");
+      if (result.matched.length === 0 && result.unmatched.length === 0 && result.excluded.length === 0) {
+        setUploadError("Não encontrei nenhuma linha reconhecível nesse arquivo. Confira se é o mesmo formato do demonstrativo financeiro mensal.");
         return;
       }
       setPendingResult(result);
@@ -459,9 +469,9 @@ export default function DreGerencial() {
       )}
 
       <p style={{ fontSize: 11.5, color: COLORS.inkMuted, marginTop: 20, textAlign: "center" }}>
-        Os códigos de conta são reconhecidos automaticamente a partir do plano de contas original.
+        As categorias do demonstrativo mensal são reconhecidas pelo nome automaticamente.
         Linhas sem conta vinculada ("Devoluções e Abatimentos", "Material para Revenda", "Receitas Financeiras")
-        ficam zeradas até serem mapeadas.
+        ficam zeradas se o mês não tiver nenhum valor lançado nelas.
       </p>
     </div>
   );

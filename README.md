@@ -1,7 +1,7 @@
 # Painel de vendas + DRE Gerencial
 
 Site com duas abas: **Vendas** (painel de vendas mensal) e **DRE Gerencial**
-(demonstrativo de resultado, mês a mês, com upload do XLS do mês para conciliar).
+(demonstrativo de resultado, mês a mês, com upload do arquivo do mês para conciliar).
 
 ## O que tem na aba DRE Gerencial
 
@@ -10,26 +10,40 @@ Site com duas abas: **Vendas** (painel de vendas mensal) e **DRE Gerencial**
   para Revenda, Resultado Operacional, Investimentos, Empréstimos, Resultado Líquido
   Operacional, Receitas Financeiras, Retirada de Sócios, Resultado Líquido Financeiro).
 - Um seletor de mês (2025 a 2027) e o botão **"Subir XLS do mês"**.
-- Ao subir um arquivo, o site procura por códigos de conta (tipo `01.01`, `04.02.06.02`)
-  em qualquer célula, pega o valor na mesma linha, e soma tudo pela linha certa do DRE
-  — isso funciona **mesmo que o layout do arquivo mude de mês para mês**, desde que os
-  códigos do plano de contas apareçam em algum lugar da planilha.
-- Antes de salvar, aparece uma tela de conferência: quanto foi reconhecido por linha, e
-  quais códigos não bateram com nada (para você conferir antes de confirmar).
+- Antes de salvar, aparece uma tela de conferência: quanto foi reconhecido por linha,
+  o que ficou de fora de propósito, e o que não bateu com nada — para você conferir
+  antes de confirmar.
 - Depois de confirmado, o mês fica salvo (no navegador) e aparece um gráfico comparando
   receita e resultado operacional entre os meses já salvos.
 
-**Sobre o arquivo a subir:** o mapeamento foi construído a partir das fórmulas da sua
-própria planilha (DRE Gerencial 0126 a 1226 → Plano de Contas). Ele espera um arquivo
-com os valores **de um mês só** — se você subir uma planilha com vários meses lado a
-lado (como a "Plano de Contas - MATRIZ 2026" original, com uma coluna por mês), o
-programa vai pegar o maior valor de cada linha, não necessariamente o do mês certo.
-Um extrato mensal (uma coluna de valor só) funciona melhor.
+## Sobre o arquivo que você sobe todo mês
 
-Duas linhas do DRE original não tinham conta vinculada na sua planilha (ficavam sempre
-zeradas): "Devoluções e Abatimentos da Receita" e "Material para Revenda" e "Receitas
-Financeiras". Elas aparecem no site do mesmo jeito, zeradas, até que você me diga a
-qual conta do plano de contas cada uma deveria se ligar.
+O reconhecimento é feito pelo **nome da categoria** (ex: "FOLHA DE PAGAMENTO",
+"SIMPLES NACIONAL", "PRO-LABORE"), lendo as colunas `descricao`, `valor` e
+`valor_total` do relatório "demonstrativo financeiro" que você exporta do sistema.
+Linhas com `valor_total` preenchido são cabeçalhos de grupo (o total dos itens
+abaixo) e são ignoradas para não contar em dobro; só os itens de linha (sem
+`valor_total`) entram na soma.
+
+Testado com o arquivo real de setembro/2026: **95 de 95 linhas com valor foram
+reconhecidas**, e o resultado final bateu exatamente com "Total de Receitas" menos
+"Total de Despesas" do arquivo original.
+
+Ficam de fora do DRE de propósito (é movimentação interna de caixa, não é resultado):
+"Rotativo/Empréstimo", "Amortização/Rotativo", "Investimentos Financeiros",
+"Reserva 13º + IPVA + IPTU", "Reserva do ICMS" — e o bloco de saldos de caixa no
+final do arquivo ("SOMATÓRIOS CAIXAS FINANCEIROS").
+
+Alguns itens tiveram que ser decididos por julgamento (o relatório mensal agrupa
+coisas que no DRE ficam em linhas separadas) — se quiser mudar algum, é só falar:
+- "PLANO DE SAUDE - SÓCIOS" → hoje conta como Despesas Administrativas
+- "JUROS E ENCARGOS" → hoje conta como Despesas Financeiras (Bancos)
+- Consultoria técnica, EPI, fretes, manutenção de rede, mitigação → hoje somados em
+  "Outras Despesas Operacionais"
+
+Se uma categoria nova aparecer num mês futuro (nome que eu nunca vi), ela cai em
+"não reconhecidos" na tela de conferência — me diga o nome e eu adiciono ao
+mapeamento (`src/dreNameMapping.js`).
 
 ## Publicar as mudanças no Vercel
 
@@ -59,7 +73,8 @@ Abre em `http://localhost:5173`.
 - `src/App.jsx` — abas (Vendas / DRE Gerencial)
 - `src/SalesDashboard.jsx` — painel de vendas (igual antes)
 - `src/DreGerencial.jsx` — painel do DRE
-- `src/dreMapping.js` — tabela de códigos de conta → linha do DRE
-- `src/dreParser.js` — leitura do XLS enviado e reconciliação
+- `src/dreMapping.js` — estrutura do DRE (linhas, grupos, subtotais)
+- `src/dreNameMapping.js` — nome da categoria → linha do DRE (o mapeamento que importa)
+- `src/dreParserByName.js` — leitura do demonstrativo financeiro mensal e reconciliação
 - `src/storage.js` — armazenamento local (substitui o `window.storage` do Claude)
 - `src/theme.js` — cores e fontes compartilhadas entre as duas abas
