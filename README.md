@@ -1,56 +1,49 @@
-# Painel de vendas
+# Painel de vendas + DRE Gerencial
 
-Dashboard de vendas e receita mensal, pronto para publicar no Vercel.
+Site com duas abas: **Vendas** (painel de vendas mensal) e **DRE Gerencial**
+(demonstrativo de resultado, mês a mês, com upload do XLS do mês para conciliar).
 
-## O que é
+## O que tem na aba DRE Gerencial
 
-Mesmo painel do artifact do Claude, agora como um site normal:
-- Vendas e receita (MRR) por mês, com gráficos
-- Tabela vendedora × mês (vendas e receita)
-- Filtros por vendedora e status do serviço
-- Botão para importar um novo relatório .xlsx exportado do sistema — os dados ficam
-  salvos no navegador (localStorage) e continuam lá da próxima vez que você abrir o site
-  *nesse mesmo navegador*
+- Estrutura igual à da sua planilha original (Receitas, Deduções, Impostos, Custos
+  Variáveis, Margem de Contribuição, Custos Fixos, Despesas Operacionais, Material
+  para Revenda, Resultado Operacional, Investimentos, Empréstimos, Resultado Líquido
+  Operacional, Receitas Financeiras, Retirada de Sócios, Resultado Líquido Financeiro).
+- Um seletor de mês (2025 a 2027) e o botão **"Subir XLS do mês"**.
+- Ao subir um arquivo, o site procura por códigos de conta (tipo `01.01`, `04.02.06.02`)
+  em qualquer célula, pega o valor na mesma linha, e soma tudo pela linha certa do DRE
+  — isso funciona **mesmo que o layout do arquivo mude de mês para mês**, desde que os
+  códigos do plano de contas apareçam em algum lugar da planilha.
+- Antes de salvar, aparece uma tela de conferência: quanto foi reconhecido por linha, e
+  quais códigos não bateram com nada (para você conferir antes de confirmar).
+- Depois de confirmado, o mês fica salvo (no navegador) e aparece um gráfico comparando
+  receita e resultado operacional entre os meses já salvos.
 
-**Importante sobre os dados:** como não há um banco de dados por trás, os dados ficam
-só no navegador de quem está usando. Se você abrir o site em outro computador ou
-navegador, vai ver apenas a base inicial (a planilha que você já tinha carregado),
-sem as atualizações feitas em outro lugar. Se no futuro você quiser que todo mundo
-da equipe veja os mesmos dados atualizados, dá para trocar `src/storage.js` por um
-banco de verdade (Vercel KV, Supabase, etc.) — me avise se quiser ajuda com isso.
+**Sobre o arquivo a subir:** o mapeamento foi construído a partir das fórmulas da sua
+própria planilha (DRE Gerencial 0126 a 1226 → Plano de Contas). Ele espera um arquivo
+com os valores **de um mês só** — se você subir uma planilha com vários meses lado a
+lado (como a "Plano de Contas - MATRIZ 2026" original, com uma coluna por mês), o
+programa vai pegar o maior valor de cada linha, não necessariamente o do mês certo.
+Um extrato mensal (uma coluna de valor só) funciona melhor.
 
-## Publicar no Vercel
+Duas linhas do DRE original não tinham conta vinculada na sua planilha (ficavam sempre
+zeradas): "Devoluções e Abatimentos da Receita" e "Material para Revenda" e "Receitas
+Financeiras". Elas aparecem no site do mesmo jeito, zeradas, até que você me diga a
+qual conta do plano de contas cada uma deveria se ligar.
 
-### Opção 1 — pelo site do Vercel (mais fácil)
+## Publicar as mudanças no Vercel
 
-1. Crie uma conta em [vercel.com](https://vercel.com) (dá para entrar com GitHub, GitLab ou e-mail).
-2. Suba esta pasta para um repositório no GitHub:
-   ```bash
-   cd painel-vendas
-   git init
-   git add .
-   git commit -m "primeiro commit"
-   git branch -M main
-   git remote add origin https://github.com/SEU-USUARIO/painel-vendas.git
-   git push -u origin main
-   ```
-3. No Vercel, clique em **New Project**, escolha o repositório `painel-vendas`.
-4. O Vercel detecta sozinho que é um projeto Vite — deixe as configurações padrão
-   (Build Command: `npm run build`, Output Directory: `dist`) e clique em **Deploy**.
-5. Em ~1 minuto o site está no ar, com uma URL tipo `painel-vendas.vercel.app`.
-
-### Opção 2 — pela linha de comando (sem GitHub)
-
-Com [Node.js](https://nodejs.org) instalado no seu computador:
+Como o projeto já está conectado ao GitHub e ao Vercel, é só substituir os arquivos e
+mandar de novo:
 
 ```bash
-cd painel-vendas
-npm install -g vercel
-vercel
+cd painel-vendas-vivaconnection
+git add .
+git commit -m "adiciona aba DRE Gerencial"
+git push
 ```
 
-Siga as perguntas (login, nome do projeto) e ele publica direto, sem precisar de
-GitHub.
+O Vercel detecta o push e publica sozinho em cerca de 1 minuto.
 
 ## Rodar localmente antes de publicar (opcional)
 
@@ -63,6 +56,10 @@ Abre em `http://localhost:5173`.
 
 ## Estrutura
 
-- `src/App.jsx` — o painel (dados da planilha já embutidos)
+- `src/App.jsx` — abas (Vendas / DRE Gerencial)
+- `src/SalesDashboard.jsx` — painel de vendas (igual antes)
+- `src/DreGerencial.jsx` — painel do DRE
+- `src/dreMapping.js` — tabela de códigos de conta → linha do DRE
+- `src/dreParser.js` — leitura do XLS enviado e reconciliação
 - `src/storage.js` — armazenamento local (substitui o `window.storage` do Claude)
-- `src/main.jsx` — ponto de entrada
+- `src/theme.js` — cores e fontes compartilhadas entre as duas abas
