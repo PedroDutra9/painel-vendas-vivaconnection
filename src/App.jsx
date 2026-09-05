@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, FileBarChart, AlertTriangle } from "lucide-react";
 import SalesDashboard from "./SalesDashboard.jsx";
 import DreGerencial from "./DreGerencial.jsx";
 import { COLORS, FONT_DISPLAY, FONT_BODY } from "./theme.js";
-import "./storage.js";
+import { checkStorageHealth } from "./storage.js";
 
 const TABS = [
   { id: "vendas", label: "Vendas", icon: TrendingUp },
@@ -12,18 +12,24 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState("vendas");
-  const storageBlocked = typeof window !== "undefined" && window.__storageAvailable === false;
+  const [storageIssue, setStorageIssue] = useState(null);
+
+  useEffect(() => {
+    checkStorageHealth().then((result) => {
+      if (!result.ok) setStorageIssue(result.error);
+    });
+  }, []);
 
   return (
     <div style={{ minHeight: "100%", background: COLORS.bg }}>
-      {storageBlocked && (
+      {storageIssue && (
         <div style={{
           background: COLORS.redSoft, color: COLORS.red, fontFamily: FONT_BODY, fontSize: 13,
           padding: "10px 24px", display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
+          textAlign: "center",
         }}>
-          <AlertTriangle size={14} />
-          Este navegador está bloqueando o armazenamento local deste site, então nada vai ficar salvo
-          entre uma visita e outra. Tente em outro navegador ou desative bloqueadores de privacidade para este site.
+          <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+          {storageIssue}
         </div>
       )}
       <div style={{

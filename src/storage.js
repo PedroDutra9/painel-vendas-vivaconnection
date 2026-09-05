@@ -1,60 +1,84 @@
-// Standalone replacement for the window.storage API available inside Claude artifacts.
-// Same shape (get/set/delete/list, all async), backed by the browser's localStorage,
-// so the dashboard component didn't need to change to run outside claude.ai.
-// Data lives only in this browser (per device/browser profile), not shared across users.
+// Client-side storage, backed by a real database (see /api/storage.js) instead
+// of the browser's localStorage. This fixes data disappearing on some browsers
+// (notably iOS Safari, which can clear localStorage when the app is fully
+// closed) and means the same data shows up on any device, not just the one
+// that uploaded it.
+//
+// Same get/set/delete/list shape as before, so DreGerencial.jsx and
+// SalesDashboard.jsx didn't need to change at all.
 
-const PREFIX = "painel-vendas:";
+const BASE = "/api/storage";
 
-function fullKey(key) {
-  return PREFIX + key;
+async function readJson(res) {
+  try {
+    return await res.json();
+  } catch (e) {
+    return {};
+  }
 }
 
 export const storage = {
   async get(key) {
-    const raw = window.localStorage.getItem(fullKey(key));
-    if (raw === null) {
+    const res = await fetch(`${BASE}?key=${encodeURIComponent(key)}`);
+    if (res.status === 404) {
       throw new Error(`Key "${key}" not found`);
     }
-    return { key, value: raw, shared: false };
+    if (!res.ok) {
+      const data = await readJson(res);
+      throw new Error(data.error || `Erro ${res.status} ao ler "${key}"`);
+    }
+    const data = await res.json();
+    return { key, value: data.value, shared: true };
   },
 
   async set(key, value) {
-    window.localStorage.setItem(fullKey(key), value);
-    return { key, value, shared: false };
+    const res = await fetch(BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, value }),
+    });
+    if (!res.ok) {
+      const data = await readJson(res);
+      throw new Error(data.error || `Erro ${res.status} ao salvar "${key}"`);
+    }
+    return { key, value, shared: true };
   },
 
   async delete(key) {
-    const existed = window.localStorage.getItem(fullKey(key)) !== null;
-    window.localStorage.removeItem(fullKey(key));
-    return { key, deleted: existed, shared: false };
+    const res = await fetch(`${BASE}?key=${encodeURIComponent(key)}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await readJson(res);
+      throw new Error(data.error || `Erro ${res.status} ao apagar "${key}"`);
+    }
+    return { key, deleted: true, shared: true };
   },
 
   async list(prefix = "") {
-    const keys = [];
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const k = window.localStorage.key(i);
-      if (k && k.startsWith(fullKey(prefix))) {
-        keys.push(k.slice(PREFIX.length));
-      }
+    const res = await fetch(`${BASE}?list=1&prefix=${encodeURIComponent(prefix)}`);
+    if (!res.ok) {
+      const data = await readJson(res);
+      throw new Error(data.error || `Erro ${res.status} ao listar chaves`);
     }
-    return { keys, prefix, shared: false };
+    const data = await res.json();
+    return { keys: data.keys, prefix, shared: true };
   },
 };
 
 if (typeof window !== "undefined") {
   window.storage = storage;
+}
 
-  // One-time check so the app can warn upfront if the browser is blocking
-  // localStorage for this site (private-mode quirks, strict privacy extensions,
-  // "block all cookies/site data" settings, etc.) instead of failing silently
-  // only when the person tries to save something.
+// Checks whether /api/storage is reachable and the database is connected.
+// Returns true/false; App.jsx uses this to show a warning banner instead of
+// letting saves fail silently (or with a confusing error) later.
+export async function checkStorageHealth() {
   try {
-    const testKey = "__storage_test__";
-    window.localStorage.setItem(testKey, "1");
-    window.localStorage.removeItem(testKey);
-    window.__storageAvailable = true;
+    const res = await fetch(`${BASE}?key=__healthcheck__`);
+    if (res.status === 404) return { ok: true }; // reachable, key just doesn't exist yet
+    if (res.ok) return { ok: true };
+    const data = await readJson(res);
+    return { ok: false, error: data.error || `Erro ${res.status}` };
   } catch (e) {
-    window.__storageAvailable = false;
-    window.__storageError = e && e.message;
+    return { ok: false, error: "Não consegui contactar /api/storage." };
   }
 }
