@@ -43,4 +43,18 @@ export const storage = {
 
 if (typeof window !== "undefined") {
   window.storage = storage;
+
+  // One-time check so the app can warn upfront if the browser is blocking
+  // localStorage for this site (private-mode quirks, strict privacy extensions,
+  // "block all cookies/site data" settings, etc.) instead of failing silently
+  // only when the person tries to save something.
+  try {
+    const testKey = "__storage_test__";
+    window.localStorage.setItem(testKey, "1");
+    window.localStorage.removeItem(testKey);
+    window.__storageAvailable = true;
+  } catch (e) {
+    window.__storageAvailable = false;
+    window.__storageError = e && e.message;
+  }
 }

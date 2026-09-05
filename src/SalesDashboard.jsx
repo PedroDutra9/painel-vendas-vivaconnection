@@ -310,12 +310,18 @@ export default function SalesDashboard() {
         { date: new Date().toISOString(), label: file.name, added, updated },
         ...importLog,
       ].slice(0, 20);
-      setRecords(merged);
-      setImportLog(newLog);
       try {
         await window.storage.set(STORAGE_KEY, JSON.stringify(merged), false);
         await window.storage.set(LOG_KEY, JSON.stringify(newLog), false);
-      } catch (e) {}
+      } catch (e) {
+        setUploadError(
+          "Não consegui salvar no navegador (" + (e && e.message ? e.message : "erro desconhecido") + "). " +
+          "Tente em outro navegador ou desative bloqueadores de privacidade para este site."
+        );
+        return;
+      }
+      setRecords(merged);
+      setImportLog(newLog);
       setUploadMsg(`Importado: ${added} novo(s), ${updated} atualizado(s).`);
     } catch (e) {
       setUploadError("Não consegui ler esse arquivo. Confira se é um .xlsx exportado do sistema.");

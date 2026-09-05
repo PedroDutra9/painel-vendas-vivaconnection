@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { TrendingUp, FileBarChart } from "lucide-react";
+import { TrendingUp, FileBarChart, AlertTriangle } from "lucide-react";
 import SalesDashboard from "./SalesDashboard.jsx";
 import DreGerencial from "./DreGerencial.jsx";
 import { COLORS, FONT_DISPLAY, FONT_BODY } from "./theme.js";
+import "./storage.js";
 
 const TABS = [
   { id: "vendas", label: "Vendas", icon: TrendingUp },
@@ -11,9 +12,20 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState("vendas");
+  const storageBlocked = typeof window !== "undefined" && window.__storageAvailable === false;
 
   return (
     <div style={{ minHeight: "100%", background: COLORS.bg }}>
+      {storageBlocked && (
+        <div style={{
+          background: COLORS.redSoft, color: COLORS.red, fontFamily: FONT_BODY, fontSize: 13,
+          padding: "10px 24px", display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
+        }}>
+          <AlertTriangle size={14} />
+          Este navegador está bloqueando o armazenamento local deste site, então nada vai ficar salvo
+          entre uma visita e outra. Tente em outro navegador ou desative bloqueadores de privacidade para este site.
+        </div>
+      )}
       <div style={{
         borderBottom: `1px solid ${COLORS.border}`, background: COLORS.surface,
         position: "sticky", top: 0, zIndex: 10,

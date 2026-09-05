@@ -280,19 +280,26 @@ export default function DreGerencial() {
     if (!pendingResult) return;
     const dre = computeDre(pendingResult.byLine);
     const snapshot = { byLine: pendingResult.byLine, dre, importedAt: new Date().toISOString() };
-    const newSnapshots = { ...snapshots, [selectedMonth]: snapshot };
     const newLog = [
       { date: new Date().toISOString(), month: selectedMonth, matched: pendingResult.matched.length, unmatched: pendingResult.unmatched.length },
       ...importLog,
     ].slice(0, 30);
+    try {
+      await window.storage.set(STORAGE_PREFIX + selectedMonth, JSON.stringify(snapshot), false);
+      await window.storage.set(LOG_KEY, JSON.stringify(newLog), false);
+    } catch (e) {
+      setUploadError(
+        "Não consegui salvar no navegador (" + (e && e.message ? e.message : "erro desconhecido") + "). " +
+        "Isso costuma acontecer se o navegador está bloqueando o armazenamento local para este site — " +
+        "tente em outro navegador, ou confira se alguma extensão de privacidade está ativa."
+      );
+      return;
+    }
+    const newSnapshots = { ...snapshots, [selectedMonth]: snapshot };
     setSnapshots(newSnapshots);
     setImportLog(newLog);
     setPendingResult(null);
     setUploadMsg(`DRE de ${monthLabel(selectedMonth)} salvo.`);
-    try {
-      await window.storage.set(STORAGE_PREFIX + selectedMonth, JSON.stringify(snapshot), false);
-      await window.storage.set(LOG_KEY, JSON.stringify(newLog), false);
-    } catch (e) { /* ignore */ }
   }, [pendingResult, snapshots, selectedMonth, importLog]);
 
   const clearMonth = useCallback(async () => {
