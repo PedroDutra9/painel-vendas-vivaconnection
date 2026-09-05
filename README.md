@@ -1,6 +1,7 @@
 # Painel de vendas + DRE Gerencial
 
-Site com duas abas: **Vendas** (painel de vendas mensal) e **DRE Gerencial**
+Site com três abas: **Vendas** (painel de vendas mensal), **Atendimentos**
+(chamados de suporte por mês, atendente e tipo/motivo) e **DRE Gerencial**
 (demonstrativo de resultado, mês a mês, com upload do arquivo do mês para conciliar).
 
 Os dados agora ficam salvos num banco de verdade (não mais no navegador), então
@@ -25,6 +26,25 @@ no Vercel (leva 2 minutos):
 
 Se você esquecer esse passo, o site mostra uma faixa vermelha no topo avisando que
 o banco não está conectado, em vez de falhar silenciosamente.
+
+## O que tem na aba Atendimentos
+
+- KPIs: atendimentos no mês mais recente, taxa de resolução, tempo médio de
+  atendimento (da abertura ao fechamento) e o atendente mais atarefado.
+- Gráficos: volume de atendimentos por mês, e taxa de resolução + tempo médio
+  por mês.
+- Tabela **Atendente × mês** (quantidade ou tempo médio, à sua escolha) e uma
+  tabela **Tipo/motivo × mês**.
+- Filtros por atendente, status (Resolvido/Pendente/Aguardando Análise) e
+  tipo/motivo.
+- Botão **"Atualizar relatório"**: sobe a nova exportação e funde pelo protocolo
+  do atendimento (novos são adicionados, existentes são atualizados).
+
+**Sobre "tipo de atendimento":** o relatório não tem uma coluna própria de tipo —
+usei o campo **motivo de fechamento** (ex: "Atendimento Executado", "Fechado
+Automático", "Pagamento realizado") como aproximação. Se você tinha outra coisa em
+mente, me diga e eu ajusto. O "atendente" é quem fechou o chamado; quando não há
+um responsável pelo fechamento (aparece "N/A"), uso quem abriu o chamado.
 
 ## O que tem na aba DRE Gerencial
 
@@ -91,8 +111,9 @@ esperado.
 
 ## Estrutura
 
-- `src/App.jsx` — abas (Vendas / DRE Gerencial) + aviso se o banco não estiver conectado
+- `src/App.jsx` — abas (Vendas / Atendimentos / DRE Gerencial) + aviso se o banco não estiver conectado
 - `src/SalesDashboard.jsx` — painel de vendas
+- `src/AtendimentosDashboard.jsx` — painel de atendimentos
 - `src/DreGerencial.jsx` — painel do DRE
 - `src/dreMapping.js` — estrutura do DRE (linhas, grupos, subtotais)
 - `src/dreNameMapping.js` — nome da categoria → linha do DRE

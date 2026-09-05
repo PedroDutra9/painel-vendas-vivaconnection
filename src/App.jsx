@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, FileBarChart, AlertTriangle } from "lucide-react";
+import { TrendingUp, FileBarChart, Headset, AlertTriangle } from "lucide-react";
 import SalesDashboard from "./SalesDashboard.jsx";
 import DreGerencial from "./DreGerencial.jsx";
+import AtendimentosDashboard from "./AtendimentosDashboard.jsx";
 import { COLORS, FONT_DISPLAY, FONT_BODY } from "./theme.js";
 import { checkStorageHealth } from "./storage.js";
 
 const TABS = [
   { id: "vendas", label: "Vendas", icon: TrendingUp },
+  { id: "atendimentos", label: "Atendimentos", icon: Headset },
   { id: "dre", label: "DRE Gerencial", icon: FileBarChart },
 ];
 
@@ -59,8 +61,10 @@ export default function App() {
           })}
         </div>
       </div>
-      <div style={{ maxWidth: tab === "dre" ? 1180 : "none", margin: tab === "dre" ? "0 auto" : 0, padding: tab === "dre" ? "28px 24px 60px" : 0 }}>
-        {tab === "vendas" ? <SalesDashboard /> : <DreGerencial />}
+      <div style={{ maxWidth: tab === "vendas" ? "none" : 1180, margin: tab === "vendas" ? 0 : "0 auto", padding: tab === "vendas" ? 0 : "28px 24px 60px" }}>
+        {tab === "vendas" && <SalesDashboard />}
+        {tab === "atendimentos" && <AtendimentosDashboard />}
+        {tab === "dre" && <DreGerencial />}
       </div>
     </div>
   );
