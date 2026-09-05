@@ -1,5 +1,5 @@
 // Vercel serverless function (deployed automatically because it lives under /api).
-// Backs the site's storage with a real database (Upstash Redis via the Vercel
+// Backs the site's storage with Upstash Redis (connected via the Vercel
 // Marketplace), so data survives across devices and browsers — not just the one
 // browser that saved it.
 //
