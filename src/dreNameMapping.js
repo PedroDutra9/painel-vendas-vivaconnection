@@ -138,6 +138,7 @@ const RAW_MAP = {
   "FULLTIME CAMERAS": "04.02",
   "FULLTIME RASTREADOR": "04.02",
   "WATCH TV": "04.02",
+  "SVA/WATCH/FULLTIME": "04.02", // versão consolidada de Fulltime Câmeras/Rastreador + Watch TV
 };
 
 export const NAME_MAP = Object.fromEntries(

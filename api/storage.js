@@ -12,11 +12,7 @@ import { Redis } from "@upstash/redis";
 
 const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-// automaticDeserialization: false — o app já faz JSON.stringify/parse manualmente
-// (storage.js e os *.jsx chamam window.storage.set/get com string). Sem isso, o
-// cliente do Upstash tenta "adivinhar" e devolve objeto/array em vez da string
-// salva, quebrando o JSON.parse() do app e fazendo os dados parecerem não salvos.
-const redis = url && token ? new Redis({ url, token, automaticDeserialization: false }) : null;
+const redis = url && token ? new Redis({ url, token }) : null;
 
 const NOT_CONFIGURED = {
   error:
